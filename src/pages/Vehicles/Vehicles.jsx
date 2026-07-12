@@ -1,5 +1,13 @@
-function Vehicles() {
-  return <h1>Vehicles</h1>;
-}
+import DashboardLayout from "../../layouts/DashboardLayout";
+import VehicleHeader from "../../components/vehicle/VehicleHeader";
+import VehicleTable from "../../components/vehicle/VehicleTable";
 
-export default Vehicles;
+export default function Vehicles() {
+  return (
+    <DashboardLayout>
+      <VehicleHeader />
+
+      <VehicleTable />
+    </DashboardLayout>
+  );
+}
