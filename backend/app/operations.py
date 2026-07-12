@@ -122,7 +122,7 @@ def get_fleet_dashboard_kpis(db: Session = Depends(get_db)):
         # We import Vehicle dynamically inside the function or at the top if available
         # from .models import Vehicle
         total_vehicles = db.query(Vehicle).count()
-        active_vehicles = db.query(Vehicle).filter(Vehicle.status == "Available").count()
+        active_vehicles = db.query(Vehicle).filter(Vehicle.status == "AVAILABLE").count()
         on_trip_vehicles = db.query(Vehicle).filter(Vehicle.status == "On Trip").count()
         in_shop_vehicles = db.query(Vehicle).filter(Vehicle.status == "In Shop").count()
 
