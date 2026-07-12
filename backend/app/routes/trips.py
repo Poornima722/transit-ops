@@ -7,44 +7,6 @@ from app.database import get_db
 
 router = APIRouter(prefix="/trips", tags=["trips"])
 
-@router.post("/")
-def create_trip(
-    source: str,
-    destination: str,
-    vehicle_id: str,
-    driver_id: str,
-    cargo_weight_kg: float,
-    planned_distance_km: float,
-    db: Session = Depends(get_db)
-):
-    trip = Trip(
-        source=source,
-        destination=destination,
-        vehicle_id=vehicle_id,
-        driver_id=driver_id,
-        cargo_weight_kg=cargo_weight_kg,
-        planned_distance_km=planned_distance_km,
-        status=TripStatus.DRAFT
-    )
-    db.add(trip)
-    db.commit()
-    db.refresh(trip)
-    return trip
-
-@router.get("/")
-def list_trips(status: TripStatus = None, db: Session = Depends(get_db)):
-    query = db.query(Trip)
-    if status:
-        query = query.filter(Trip.status == status)
-    return query.all()
-
-
-@router.get("/{trip_id}")
-def get_trip(trip_id: str, db: Session = Depends(get_db)):
-    trip = db.query(Trip).filter(Trip.id == trip_id).first()
-    if not trip:
-        raise HTTPException(status_code=404, detail="Trip not found")
-    return trip
 
 @router.post("/{trip_id}/dispatch")
 def dispatch_trip(trip_id: str, db: Session = Depends(get_db)):
@@ -63,6 +25,12 @@ def dispatch_trip(trip_id: str, db: Session = Depends(get_db)):
     # 3. Fetch vehicle + driver
     vehicle = db.query(Vehicle).filter(Vehicle.id == trip.vehicle_id).first()
     driver = db.query(Driver).filter(Driver.id == trip.driver_id).first()
+
+    # 3b. Guard: make sure they actually exist before reading their attributes
+    if not vehicle:
+        raise HTTPException(status_code=404, detail={"error": "Vehicle not found", "vehicle_id": trip.vehicle_id})
+    if not driver:
+        raise HTTPException(status_code=404, detail={"error": "Driver not found", "driver_id": trip.driver_id})
 
     # 4. Vehicle must be Available
     if vehicle.status != VehicleStatus.AVAILABLE:
@@ -128,54 +96,3 @@ def dispatch_trip(trip_id: str, db: Session = Depends(get_db)):
             "status": driver.status
         }
     }
-
-@router.post("/{trip_id}/complete")
-def complete_trip(trip_id: str, final_odometer: float, fuel_consumed_l: float, db: Session = Depends(get_db)):
-    trip = db.query(Trip).filter(Trip.id == trip_id).first()
-    if not trip:
-        raise HTTPException(status_code=404, detail="Trip not found")
-
-    if trip.status != TripStatus.DISPATCHED:
-        raise HTTPException(
-            status_code=400,
-            detail={"error": "Trip must be Dispatched to complete", "current_status": trip.status}
-        )
-
-    vehicle = db.query(Vehicle).filter(Vehicle.id == trip.vehicle_id).first()
-    driver = db.query(Driver).filter(Driver.id == trip.driver_id).first()
-
-    trip.status = TripStatus.COMPLETED
-    trip.final_odometer = final_odometer
-    trip.fuel_consumed_l = fuel_consumed_l
-    trip.completed_at = datetime.utcnow()
-    vehicle.status = VehicleStatus.AVAILABLE
-    driver.status = DriverStatus.AVAILABLE
-
-    db.commit()
-    db.refresh(trip)
-    return trip
-
-
-@router.post("/{trip_id}/cancel")
-def cancel_trip(trip_id: str, db: Session = Depends(get_db)):
-    trip = db.query(Trip).filter(Trip.id == trip_id).first()
-    if not trip:
-        raise HTTPException(status_code=404, detail="Trip not found")
-
-    if trip.status != TripStatus.DISPATCHED:
-        raise HTTPException(
-            status_code=400,
-            detail={"error": "Trip must be Dispatched to cancel", "current_status": trip.status}
-        )
-
-    vehicle = db.query(Vehicle).filter(Vehicle.id == trip.vehicle_id).first()
-    driver = db.query(Driver).filter(Driver.id == trip.driver_id).first()
-
-    trip.status = TripStatus.CANCELLED
-    trip.cancelled_at = datetime.utcnow()
-    vehicle.status = VehicleStatus.AVAILABLE
-    driver.status = DriverStatus.AVAILABLE
-
-    db.commit()
-    db.refresh(trip)
-    return trip
