@@ -22,31 +22,30 @@ export default function VehicleTable({ vehicles }) {
               </td>
             </tr>
           ) : (
-            vehicles.map((vehicle) => (
-              <tr key={vehicle.id} className="border-b hover:bg-gray-50">
-                <td className="p-4">{vehicle.registration_number}</td>
+            vehicles.map((vehicle, index) => (
+              <tr key={index} className="border-b hover:bg-gray-50">
+                <td className="p-4">{vehicle.registration}</td>
 
-                <td className="p-4">{vehicle.name_model}</td>
+                <td className="p-4">{vehicle.model}</td>
 
                 <td className="p-4">{vehicle.type}</td>
 
-                <td className="p-4">{vehicle.max_load_capacity_kg} kg</td>
+                <td className="p-4">{vehicle.capacity}</td>
 
-                <td className="p-4">{vehicle.odometer} km</td>
+                <td className="p-4">{vehicle.odometer}</td>
 
-                <td className="p-4">₹{vehicle.acquisition_cost}</td>
+                <td className="p-4">{vehicle.cost}</td>
 
                 <td className="p-4">
                   <span
-                    className={`px-3 py-1 rounded-full text-sm font-semibold
-                    ${
-                      vehicle.status === "AVAILABLE"
+                    className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                      vehicle.status === "Available"
                         ? "bg-green-100 text-green-700"
-                        : vehicle.status === "ON_TRIP"
-                          ? "bg-blue-100 text-blue-700"
-                          : vehicle.status === "IN_SHOP"
-                            ? "bg-orange-100 text-orange-700"
-                            : "bg-gray-200 text-gray-700"
+                        : vehicle.status === "On Trip"
+                        ? "bg-blue-100 text-blue-700"
+                        : vehicle.status === "In Shop"
+                        ? "bg-orange-100 text-orange-700"
+                        : "bg-gray-200 text-gray-700"
                     }`}
                   >
                     {vehicle.status}

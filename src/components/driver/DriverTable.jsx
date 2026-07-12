@@ -1,44 +1,6 @@
 import DriverRow from "./DriverRow";
 
-const drivers = [
-  {
-    name: "Alex Kumar",
-    license: "DL123456",
-    category: "LMV",
-    phone: "9876543210",
-    score: 95,
-    status: "Available",
-  },
-
-  {
-    name: "Rahul Sharma",
-    license: "KA765432",
-    category: "HMV",
-    phone: "9876543211",
-    score: 88,
-    status: "On Trip",
-  },
-
-  {
-    name: "Priya Singh",
-    license: "KA888999",
-    category: "LMV",
-    phone: "9876543212",
-    score: 92,
-    status: "Off Duty",
-  },
-
-  {
-    name: "John Peter",
-    license: "KA555444",
-    category: "HMV",
-    phone: "9876543213",
-    score: 70,
-    status: "Suspended",
-  },
-];
-
-export default function DriverTable() {
+export default function DriverTable({ drivers }) {
   return (
     <div className="bg-white rounded-xl shadow mt-8 overflow-hidden">
       <table className="w-full">
@@ -52,16 +14,24 @@ export default function DriverTable() {
 
             <th>Phone</th>
 
-            <th>Safety</th>
+            <th>Safety Score</th>
 
             <th>Status</th>
           </tr>
         </thead>
 
         <tbody>
-          {drivers.map((driver) => (
-            <DriverRow key={driver.license} driver={driver} />
-          ))}
+          {drivers.length === 0 ? (
+            <tr>
+              <td colSpan="6" className="text-center p-8 text-gray-500">
+                No Drivers Found
+              </td>
+            </tr>
+          ) : (
+            drivers.map((driver, index) => (
+              <DriverRow key={driver.license || index} driver={driver} />
+            ))
+          )}
         </tbody>
       </table>
     </div>
