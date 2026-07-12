@@ -1,8 +1,26 @@
+import { useEffect, useState } from "react";
+import { getVehicles } from "../../services/vehicleService";
+
 import DashboardLayout from "../../layouts/DashboardLayout";
 import VehicleHeader from "../../components/vehicle/VehicleHeader";
 import VehicleTable from "../../components/vehicle/VehicleTable";
 
 export default function Vehicles() {
+  const [vehicles, setVehicles] = useState([]);
+
+  useEffect(() => {
+    const fetchVehicles = async () => {
+      try {
+        const data = await getVehicles();
+        setVehicles(data);
+      } catch (error) {
+        console.error("Error loading vehicles:", error);
+      }
+    };
+
+    fetchVehicles();
+  }, []);
+
   return (
     <DashboardLayout>
       <VehicleHeader />
@@ -10,7 +28,7 @@ export default function Vehicles() {
       <div className="grid grid-cols-4 gap-5 mt-8 mb-8">
         <div className="bg-white rounded-xl shadow p-5">
           <p className="text-gray-500">Total Vehicles</p>
-          <h1 className="text-4xl font-bold mt-2">24</h1>
+          <h1 className="text-4xl font-bold mt-2">{vehicles.length}</h1>
         </div>
 
         <div className="bg-green-100 rounded-xl p-5">
@@ -29,7 +47,7 @@ export default function Vehicles() {
         </div>
       </div>
 
-      <VehicleTable />
+      <VehicleTable vehicles={vehicles} />
     </DashboardLayout>
   );
 }
