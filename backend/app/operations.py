@@ -123,8 +123,8 @@ def get_fleet_dashboard_kpis(db: Session = Depends(get_db)):
         # from .models import Vehicle
         total_vehicles = db.query(Vehicle).count()
         active_vehicles = db.query(Vehicle).filter(Vehicle.status == "AVAILABLE").count()
-        on_trip_vehicles = db.query(Vehicle).filter(Vehicle.status == "On Trip").count()
-        in_shop_vehicles = db.query(Vehicle).filter(Vehicle.status == "In Shop").count()
+        on_trip_vehicles = db.query(Vehicle).filter(Vehicle.status == "ON_TRIP").count()
+        in_shop_vehicles = db.query(Vehicle).filter(Vehicle.status == "IN_SHOP").count()
 
         # 3. Fleet Utilization Rate Calculation
         # Formula: (Vehicles on Trip) / (Total Active Operational Vehicles) * 100
@@ -142,7 +142,7 @@ def get_fleet_dashboard_kpis(db: Session = Depends(get_db)):
             },
             "fleet_status": {
                 "total_fleet_size": total_vehicles,
-                "available": active_vehicles,
+                "AVAILABLE": active_vehicles,
                 "on_trip": on_trip_vehicles,
                 "in_shop": in_shop_vehicles
             },
