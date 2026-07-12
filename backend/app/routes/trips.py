@@ -28,22 +28,36 @@ def dispatch_trip(trip_id: str, db: Session = Depends(get_db)):
 
     # 3b. Guard: make sure they actually exist before reading their attributes
     if not vehicle:
-        raise HTTPException(status_code=404, detail={"error": "Vehicle not found", "vehicle_id": trip.vehicle_id})
+        raise HTTPException(
+            status_code=404,
+            detail={"error": "Vehicle not found", "vehicle_id": trip.vehicle_id}
+        )
     if not driver:
-        raise HTTPException(status_code=404, detail={"error": "Driver not found", "driver_id": trip.driver_id})
+        raise HTTPException(
+            status_code=404,
+            detail={"error": "Driver not found", "driver_id": trip.driver_id}
+        )
 
     # 4. Vehicle must be Available
     if vehicle.status != VehicleStatus.AVAILABLE:
         raise HTTPException(
             status_code=400,
-            detail={"error": "Vehicle is not available", "vehicle_status": vehicle.status}
+            detail={
+                "error": "Vehicle is not available",
+                "vehicle_id": vehicle.id,
+                "vehicle_status": vehicle.status
+            }
         )
 
     # 5. Driver must be Available
     if driver.status != DriverStatus.AVAILABLE:
         raise HTTPException(
             status_code=400,
-            detail={"error": "Driver is not available", "driver_status": driver.status}
+            detail={
+                "error": "Driver is not available",
+                "driver_id": driver.id,
+                "driver_status": driver.status
+            }
         )
 
     # 6. License must not be expired
@@ -52,6 +66,7 @@ def dispatch_trip(trip_id: str, db: Session = Depends(get_db)):
             status_code=400,
             detail={
                 "error": "Driver's license has expired",
+                "driver_id": driver.id,
                 "license_expiry_date": driver.license_expiry_date.isoformat()
             }
         )
@@ -62,6 +77,7 @@ def dispatch_trip(trip_id: str, db: Session = Depends(get_db)):
             status_code=400,
             detail={
                 "error": "Cargo weight exceeds vehicle capacity",
+                "vehicle_id": vehicle.id,
                 "cargo_weight_kg": trip.cargo_weight_kg,
                 "max_load_capacity_kg": vehicle.max_load_capacity_kg
             }
