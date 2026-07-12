@@ -1,11 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import func
+from .database import get_db
 from uuid import uuid4
 from datetime import datetime
 
 # Import the models directly from the models.py file next door
-from .models import Maintenance, FuelLog, Expense
+from .models import Maintenance, FuelLog, Expense, Vehicle
 
 # NOTE: Adjust this import path if Pratheeksha put the database engine/session 
 # inside a separate file like database.py or config.py
@@ -82,7 +83,7 @@ def log_expense(vehicle_id: str, category: str, amount: float, notes: str = None
 
 
 # ==========================================
-# 3. LIVE RUNNING COST CALCULATION
+# LIVE RUNNING COST CALCULATION
 # ==========================================
 
 @router.get("/vehicles/{vehicle_id}/running-cost")
@@ -103,3 +104,54 @@ def get_running_cost(vehicle_id: str, db: Session = Depends(get_db)):
         },
         "total_running_cost": total_running_cost
     }
+
+# ==========================================
+# 3. LIVE EXECUTIVE DASHBOARD KPIs (TASK 3)
+# ==========================================
+
+@router.get("/dashboard/kpis")
+def get_fleet_dashboard_kpis(db: Session = Depends(get_db)):
+    try:
+        # 1. Total Fleet Running Cost Aggregations (Across all vehicles)
+        grand_fuel = db.query(func.sum(FuelLog.cost)).scalar() or 0.0
+        grand_expenses = db.query(func.sum(Expense.amount)).scalar() or 0.0
+        grand_maint = db.query(func.sum(Maintenance.cost)).scalar() or 0.0
+        total_fleet_spend = grand_fuel + grand_expenses + grand_maint
+
+        # 2. Vehicle Status Counts
+        # We import Vehicle dynamically inside the function or at the top if available
+        # from .models import Vehicle
+        total_vehicles = db.query(Vehicle).count()
+        active_vehicles = db.query(Vehicle).filter(Vehicle.status == "Available").count()
+        on_trip_vehicles = db.query(Vehicle).filter(Vehicle.status == "On Trip").count()
+        in_shop_vehicles = db.query(Vehicle).filter(Vehicle.status == "In Shop").count()
+
+        # 3. Fleet Utilization Rate Calculation
+        # Formula: (Vehicles on Trip) / (Total Active Operational Vehicles) * 100
+        operational_vehicles = active_vehicles + on_trip_vehicles
+        utilization_rate = 0.0
+        if operational_vehicles > 0:
+            utilization_rate = round((on_trip_vehicles / operational_vehicles) * 100, 2)
+
+        return {
+            "summary": {
+                "total_fleet_cost": total_fleet_spend,
+                "fuel_share": grand_fuel,
+                "expense_share": grand_expenses,
+                "maintenance_share": grand_maint
+            },
+            "fleet_status": {
+                "total_fleet_size": total_vehicles,
+                "available": active_vehicles,
+                "on_trip": on_trip_vehicles,
+                "in_shop": in_shop_vehicles
+            },
+            "metrics": {
+                "utilization_rate_percent": utilization_rate
+            }
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Failed to calculate dashboard KPIs: {str(e)}"
+        )
