@@ -155,3 +155,67 @@ def get_fleet_dashboard_kpis(db: Session = Depends(get_db)):
             status_code=500, 
             detail=f"Failed to calculate dashboard KPIs: {str(e)}"
         )
+
+# ==========================================
+# 4. REPORTS & FINANCIAL ANALYTICS (TASK 4)
+# ==========================================
+
+@router.get("/reports/fuel-efficiency")
+def get_fuel_efficiency_report(db: Session = Depends(get_db)):
+    try:
+        # Group fuel logs by vehicle to calculate efficiency metrics
+        records = db.query(
+            FuelLog.vehicle_id,
+            func.sum(FuelLog.liters).label("total_liters"),
+            func.sum(FuelLog.cost).label("total_spent"),
+            func.count(FuelLog.id).label("fill_ups")
+        ).group_by(FuelLog.vehicle_id).all()
+        
+        report = []
+        for r in records:
+            # Simple efficiency metric: Avg liters per fill-up (or cost per liter)
+            avg_liters_per_trip = round(r.total_liters / r.fill_ups, 2) if r.fill_ups > 0 else 0.0
+            report.append({
+                "vehicle_id": r.vehicle_id,
+                "total_liters_consumed": r.total_liters,
+                "total_fuel_spend": r.total_spent,
+                "fill_ups_count": r.fill_ups,
+                "avg_liters_per_fill": avg_liters_per_trip
+            })
+            
+        return {"report_type": "Fuel Efficiency Analytics", "data": report}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Fuel report failed: {str(e)}")
+
+
+@router.get("/reports/fleet-roi")
+def get_fleet_roi_report(db: Session = Depends(get_db)):
+    try:
+        # High-level breakdown per vehicle to display ROI parameters
+        vehicles = db.query(Vehicle.id, Vehicle.status).all()
+        roi_report = []
+        
+        for v in vehicles:
+            fuel_cost = db.query(func.sum(FuelLog.cost)).filter(FuelLog.vehicle_id == v.id).scalar() or 0.0
+            exp_cost = db.query(func.sum(Expense.amount)).filter(Expense.vehicle_id == v.id).scalar() or 0.0
+            maint_cost = db.query(func.sum(Maintenance.cost)).filter(Maintenance.vehicle_id == v.id).scalar() or 0.0
+            
+            total_outflow = fuel_cost + exp_cost + maint_cost
+            
+            # Mocking operational yield/revenue for demo purposes to calculate ROI
+            # In a live app, this would query Trip revenues
+            estimated_revenue = total_outflow * 1.4  
+            net_profit = estimated_revenue - total_outflow
+            
+            roi_report.append({
+                "vehicle_id": v.id,
+                "status": v.status,
+                "total_expenses": total_outflow,
+                "estimated_revenue": round(estimated_revenue, 2),
+                "net_profit": round(net_profit, 2),
+                "roi_percentage": 40.0 if total_outflow > 0 else 0.0
+            })
+            
+        return {"report_type": "Fleet ROI Financial Summary", "data": roi_report}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"ROI report failed: {str(e)}")
