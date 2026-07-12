@@ -3,8 +3,8 @@ import StatusBadge from "./StatusBadge";
 
 export default function VehicleRow({ vehicle }) {
   return (
-    <tr className="border-b hover:bg-slate-50 transition">
-      <td className="p-4 font-semibold">{vehicle.reg}</td>
+    <tr className="border-b hover:bg-gray-50 transition">
+      <td className="py-4">{vehicle.registration}</td>
 
       <td>{vehicle.model}</td>
 
@@ -22,11 +22,11 @@ export default function VehicleRow({ vehicle }) {
 
       <td>
         <div className="flex gap-3">
-          <button className="text-blue-600 hover:scale-110">
+          <button className="text-blue-600 hover:text-blue-800">
             <Pencil size={18} />
           </button>
 
-          <button className="text-red-600 hover:scale-110">
+          <button className="text-red-600 hover:text-red-800">
             <Trash2 size={18} />
           </button>
         </div>

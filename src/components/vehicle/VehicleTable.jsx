@@ -75,3 +75,4 @@ export default function VehicleTable() {
     </div>
   );
 }
+<th className="text-left py-4">Actions</th>;
