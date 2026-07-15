@@ -6,7 +6,7 @@ from uuid import uuid4
 from datetime import datetime
 
 # Import the models directly from the models.py file next door
-from .models import Maintenance, FuelLog, Expense, Vehicle
+from .models import Maintenance, FuelLog, Expense, Vehicle, MaintenanceStatus
 
 # NOTE: Adjust this import path if Pratheeksha put the database engine/session 
 # inside a separate file like database.py or config.py
@@ -26,7 +26,7 @@ def create_maintenance_log(vehicle_id: str, description: str, cost: float = 0.0,
         vehicle_id=vehicle_id,
         description=description,
         cost=cost,
-        status="ACTIVE", # Pylance might highlight this until MaintenanceStatus enum is imported
+        status=MaintenanceStatus.ACTIVE, # Pylance might highlight this until MaintenanceStatus enum is imported
         created_at=datetime.utcnow()
     )
     
@@ -42,7 +42,7 @@ def close_maintenance_log(log_id: str, db: Session = Depends(get_db)):
     if not log:
         raise HTTPException(status_code=404, detail="Maintenance log not found")
         
-    log.status = "CLOSED" 
+    log.status = MaintenanceStatus.CLOSED 
     log.closed_at = datetime.utcnow()
     
     db.commit()
